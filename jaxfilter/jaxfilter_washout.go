@@ -11,7 +11,7 @@ func NewWashout(interval uint) *washout.Washout {
 	}
 	rotationLPFs := [2]washout.Filter{}
 	for i := range rotationLPFs {
-		rotationLPFs[i] = NewRotationLowPassFilter(interval)
+		rotationLPFs[i] = NewTranslationLowPassFilter(interval)
 	}
 	rotationHPFs := [3]washout.Filter{}
 	for i := range rotationHPFs {

@@ -15,9 +15,9 @@ import (
 type Washout struct {
 	TranslationScale, RotationScale float64
 
-	translationHPFs *[3]Filter
-	rotationLPFs    *[2]Filter
-	rotationHPFs    *[3]Filter
+	translationHighPassFilters *[3]Filter
+	translationLowPassFilters  *[2]Filter
+	rotationHighPassFilters    *[3]Filter
 
 	translationDoubleIntegrals *[3]integral.Integral
 	rotationIntegrals          *[3]integral.Integral
@@ -38,9 +38,10 @@ type Position struct {
 const gravityMM = 9.80665 * 1000
 
 // NewWashout creates a new washout filter.
-func NewWashout(translationHPFs *[3]Filter,
-	rotationLPFs *[2]Filter,
-	rotationHPFs *[3]Filter, interval uint) *Washout {
+func NewWashout(
+	translationHighPassFilters *[3]Filter,
+	translationLowPassFilters *[2]Filter,
+	rotationHighPassFilters *[3]Filter, interval uint) *Washout {
 	const double = 2
 	translationDoubleIntegrals := [3]integral.Integral{
 		*integral.NewMulti(interval, double),
@@ -54,9 +55,9 @@ func NewWashout(translationHPFs *[3]Filter,
 	return &Washout{
 		TranslationScale:           1,
 		RotationScale:              1,
-		translationHPFs:            translationHPFs,
-		rotationLPFs:               rotationLPFs,
-		rotationHPFs:               rotationHPFs,
+		translationHighPassFilters: translationHighPassFilters,
+		translationLowPassFilters:  translationLowPassFilters,
+		rotationHighPassFilters:    rotationHighPassFilters,
 		translationDoubleIntegrals: &translationDoubleIntegrals,
 		rotationIntegrals:          &rotationIntegrals}
 }
@@ -94,9 +95,9 @@ func (w *Washout) translationFilter(acceralation Vector) Vector {
 	acce := acceralation.Plus(w.gravityVector)
 	acce.Z -= gravityMM
 	acce = Vector{
-		w.translationHPFs[0].Filter(acce.X),
-		w.translationHPFs[1].Filter(acce.Y),
-		w.translationHPFs[2].Filter(acce.Z)}
+		w.translationHighPassFilters[0].Filter(acce.X),
+		w.translationHighPassFilters[1].Filter(acce.Y),
+		w.translationHighPassFilters[2].Filter(acce.Z)}
 
 	return Vector{
 		w.translationDoubleIntegrals[0].Integrate(acce.X),
@@ -105,8 +106,8 @@ func (w *Washout) translationFilter(acceralation Vector) Vector {
 }
 
 func (w *Washout) tiltFilter(acceralation Vector) Vector {
-	filteredAx := w.rotationLPFs[0].Filter(acceralation.X)
-	filteredAy := w.rotationLPFs[1].Filter(acceralation.Y)
+	filteredAx := w.translationLowPassFilters[0].Filter(acceralation.X)
+	filteredAy := w.translationLowPassFilters[1].Filter(acceralation.Y)
 
 	// TODO: Check if asin returns NaN
 	// math.IsNaN(math.Asin(x)
@@ -121,9 +122,9 @@ func (w *Washout) tiltFilter(acceralation Vector) Vector {
 // rotationFilter returns the simulator angle to simulate
 func (w *Washout) rotationFilter(scaledAngVel Vector) Vector {
 	filteredAngVel := Vector{
-		w.rotationHPFs[0].Filter(scaledAngVel.X),
-		w.rotationHPFs[1].Filter(scaledAngVel.Y),
-		w.rotationHPFs[2].Filter(scaledAngVel.Z)}
+		w.rotationHighPassFilters[0].Filter(scaledAngVel.X),
+		w.rotationHighPassFilters[1].Filter(scaledAngVel.Y),
+		w.rotationHighPassFilters[2].Filter(scaledAngVel.Z)}
 
 	return Vector{
 		w.rotationIntegrals[0].Integrate(filteredAngVel.X),

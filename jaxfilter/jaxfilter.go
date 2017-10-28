@@ -35,8 +35,8 @@ func (f *TranslationHighPassFilter) Filter(input float64) float64 {
 	return f.outputs[0]
 }
 
-// A RotationLowPassFilter is a low pass filter for rotation.
-type RotationLowPassFilter struct {
+// A TranslationLowPassFilter is a low pass filter for rotation.
+type TranslationLowPassFilter struct {
 	SamplingTime    uint
 	CutoffFrequency float64
 	DampingRatio    float64
@@ -45,7 +45,7 @@ type RotationLowPassFilter struct {
 }
 
 // Filter passes the low frequency component of a signal.
-func (f *RotationLowPassFilter) Filter(input float64) float64 {
+func (f *TranslationLowPassFilter) Filter(input float64) float64 {
 	f.inputs[0] = input
 
 	// (TωLP)^2、4ζωLP*T

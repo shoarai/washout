@@ -20,17 +20,17 @@ func NewTranslationHighPassFilters(interval uint) *[3]TranslationHighPassFilter 
 	}
 }
 
-func NewRotationLowPassFilter(interval uint) *RotationLowPassFilter {
-	return &RotationLowPassFilter{
+func NewTranslationLowPassFilter(interval uint) *TranslationLowPassFilter {
+	return &TranslationLowPassFilter{
 		SamplingTime:    interval,
 		CutoffFrequency: cutoffFrequencyForLowPass,
 		DampingRatio:    dampingRatio}
 }
 
-func NewRotationLowPassFilters(interval uint) *[2]RotationLowPassFilter {
-	return &[2]RotationLowPassFilter{
-		*NewRotationLowPassFilter(interval),
-		*NewRotationLowPassFilter(interval),
+func NewTranslationLowPassFilters(interval uint) *[2]TranslationLowPassFilter {
+	return &[2]TranslationLowPassFilter{
+		*NewTranslationLowPassFilter(interval),
+		*NewTranslationLowPassFilter(interval),
 	}
 }
 
