@@ -11,50 +11,43 @@ import (
 	. "github.com/shoarai/washout/internal/vector"
 )
 
+// An Position is a position of simulator.
+type Position struct {
+	X, Y, Z, AngleX, AngleY, AngleZ float64
+}
+
+// A Filter is a filter returns an output from an input.
+type Filter interface {
+	Filter(float64) float64
+}
+
 // An Washout is a washout filter.
 type Washout struct {
+	TranslationScale, RotationScale float64
+
 	translationHPFs *[3]Filter
 	rotationLPFs    *[2]Filter
 	rotationHPFs    *[3]Filter
 
 	translationDoubleIntegrals *[3]integral.Integral
 	rotationIntegrals          *[3]integral.Integral
-
-	translationScale, rotationScale float64
-	gravityVector                   Vector
-}
-
-// type WashoutFilter interface {
-// 	Filter(accelerationX, accelerationY, accelerationZ,
-// 		angularVelocityX, angularVelocityY, angularVelocityZ float64) Position
-// }
-
-type Position struct {
-	X, Y, Z, AngleX, AngleY, AngleZ float64
-}
-
-type Filter interface {
-	Filter(float64) float64
+	gravityVector              Vector
 }
 
 // New creates a new washout filter.
 func New(
 	translationHPFs *[3]Filter,
 	rotationLPFs *[2]Filter,
-	rotationHPFs *[3]Filter,
-	interval uint) *Washout {
-
-	var double uint = 2
+	rotationHPFs *[3]Filter, interval uint) *Washout {
+	const double = 2
 	translationDoubleIntegrals := [3]integral.Integral{
 		*integral.NewMulti(interval, double),
 		*integral.NewMulti(interval, double),
-		*integral.NewMulti(interval, double),
-	}
+		*integral.NewMulti(interval, double)}
 	rotationIntegrals := [3]integral.Integral{
 		*integral.New(interval),
 		*integral.New(interval),
-		*integral.New(interval),
-	}
+		*integral.New(interval)}
 
 	return &Washout{
 		translationHPFs:            translationHPFs,
@@ -62,12 +55,12 @@ func New(
 		rotationHPFs:               rotationHPFs,
 		translationDoubleIntegrals: &translationDoubleIntegrals,
 		rotationIntegrals:          &rotationIntegrals,
-		translationScale:           1,
-		rotationScale:              1}
+		TranslationScale:           1,
+		RotationScale:              1}
 }
 
-// gravity_mm is the acceleration of gravity.
-const gravity_mm = 9.80665 * 1000
+// gravityMM is the acceleration of gravity.
+const gravityMM = 9.80665 * 1000
 
 // Filter processes vehicle motions to produce simulator positions to simulate the motion.
 // The filter receives vehicle's accelarations in meters per second,
@@ -80,10 +73,10 @@ func (w *Washout) Filter(
 
 	scaledAcceralation := Vector{
 		accelerationX, accelerationY, accelerationZ,
-	}.Multi(w.translationScale)
+	}.Multi(w.TranslationScale)
 	scaledAngVel := Vector{
 		angularVelocityX, angularVelocityY, angularVelocityZ,
-	}.Multi(w.rotationScale)
+	}.Multi(w.RotationScale)
 
 	displacement := w.translationFilter(scaledAcceralation)
 
@@ -100,7 +93,7 @@ func (w *Washout) Filter(
 
 func (w *Washout) translationFilter(acceralation Vector) Vector {
 	acce := acceralation.Plus(w.gravityVector)
-	acce.Z -= gravity_mm
+	acce.Z -= gravityMM
 	acce = Vector{
 		w.translationHPFs[0].Filter(acce.X),
 		w.translationHPFs[1].Filter(acce.Y),
@@ -121,8 +114,8 @@ func (w *Washout) tiltFilter(acceralation Vector) Vector {
 
 	// Convert low pass filtered accerarations to tilt angles
 	return Vector{
-		math.Asin(filteredAy / gravity_mm),
-		-math.Asin(filteredAx / gravity_mm),
+		math.Asin(filteredAy / gravityMM),
+		-math.Asin(filteredAx / gravityMM),
 		0}
 }
 
@@ -150,5 +143,5 @@ func (w *Washout) calculateGravity(angle Vector) Vector {
 		-ssit,
 		sphi * csit,
 		cphi * csit,
-	}.Multi(gravity_mm)
+	}.Multi(gravityMM)
 }
