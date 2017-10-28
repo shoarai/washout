@@ -112,9 +112,9 @@ func (w *Washout) toSimulatorTilt(acceralation *Vector) Vector {
 }
 
 // toSimulatorRotation returns the simulator angle to simulate.
-func (w *Washout) toSimulatorRotation(scaledAngVel *Vector) Vector {
-	angVel := w.filterVector(w.rotationHighPassFilters, scaledAngVel)
-	return w.integrateVector(w.rotationIntegrals, &angVel)
+func (w *Washout) toSimulatorRotation(angVel *Vector) Vector {
+	filteredAngVel := w.filterVector(w.rotationHighPassFilters, angVel)
+	return w.integrateVector(w.rotationIntegrals, &filteredAngVel)
 }
 
 // calculateGravity calculates gravity in the simulator coordinate.
