@@ -70,16 +70,16 @@ func NewWashout(
 func (w *Washout) Filter(
 	accelerationX, accelerationY, accelerationZ,
 	angularVelocityX, angularVelocityY, angularVelocityZ float64) Position {
-	scaledAcceralation := Vector{
+	scaledAcceleration := Vector{
 		accelerationX, accelerationY, accelerationZ,
 	}.Multi(w.TranslationScale)
 	scaledAngVel := Vector{
 		angularVelocityX, angularVelocityY, angularVelocityZ,
 	}.Multi(w.RotationScale)
 
-	displacement := w.toSimulatorDisplacement(&scaledAcceralation)
+	displacement := w.toSimulatorDisplacement(&scaledAcceleration)
 
-	tiltAngle := w.toSimulatorTilt(&scaledAcceralation)
+	tiltAngle := w.toSimulatorTilt(&scaledAcceleration)
 	rotationAngle := w.toSimulatorRotation(&scaledAngVel)
 	angle := tiltAngle.Plus(rotationAngle)
 
@@ -90,16 +90,16 @@ func (w *Washout) Filter(
 		angle.X, angle.Y, angle.Z}
 }
 
-func (w *Washout) toSimulatorDisplacement(acceralation *Vector) Vector {
-	acce := acceralation.Plus(w.simulatorGravity)
+func (w *Washout) toSimulatorDisplacement(acceleration *Vector) Vector {
+	acce := acceleration.Plus(w.simulatorGravity)
 	acce.Z -= gravityMM
 	acce = w.filterVector(w.translationHighPassFilters, &acce)
 	return w.integrateVector(w.translationDoubleIntegrals, &acce)
 }
 
-func (w *Washout) toSimulatorTilt(acceralation *Vector) Vector {
-	filteredAx := w.translationLowPassFilters[0].Filter(acceralation.X)
-	filteredAy := w.translationLowPassFilters[1].Filter(acceralation.Y)
+func (w *Washout) toSimulatorTilt(acceleration *Vector) Vector {
+	filteredAx := w.translationLowPassFilters[0].Filter(acceleration.X)
+	filteredAy := w.translationLowPassFilters[1].Filter(acceleration.Y)
 
 	// TODO: Check if asin returns NaN.
 	// math.IsNaN(math.Asin(x)
