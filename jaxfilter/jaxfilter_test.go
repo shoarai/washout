@@ -1,10 +1,12 @@
-package sample_washout_test
+// Copyright © 2017 shoarai
+
+package jaxfilter_test
 
 import (
 	"testing"
 
 	"github.com/shoarai/washout"
-	"github.com/shoarai/washout/sample_washout"
+	"github.com/shoarai/washout/jaxfilter"
 )
 
 func TestSampleWashoutFilter_inputZero(t *testing.T) {
@@ -15,7 +17,7 @@ func TestSampleWashoutFilter_inputZero(t *testing.T) {
 		{Z: -3.5499057310185567}}
 
 	const interval = 10
-	wash := sample_washout.New(interval)
+	wash := jaxfilter.NewWashout(interval)
 
 	for _, expected := range expecteds {
 		actual := wash.Filter(0, 0, 0, 0, 0, 0)
@@ -57,7 +59,7 @@ func TestSampleWashoutFilter_translation(t *testing.T) {
 	}}
 
 	const interval = 10
-	wash := sample_washout.NewWashout(interval)
+	wash := jaxfilter.NewWashout(interval)
 
 	for _, expected := range expecteds {
 		actual := wash.Filter(1, 1, 0, 0, 0, 0)
@@ -99,7 +101,7 @@ func TestSampleWashoutFilter(t *testing.T) {
 	}}
 
 	const interval = 10
-	wash := sample_washout.New(interval)
+	wash := jaxfilter.NewWashout(interval)
 
 	for _, expected := range expecteds {
 		actual := wash.Filter(1, 2, 3, 4, 5, 6)

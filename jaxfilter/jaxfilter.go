@@ -1,6 +1,6 @@
 // Copyright © 2017 shoarai
 
-package sample_washout
+package jaxfilter
 
 func square(x float64) float64 {
 	return x * x
