@@ -1,8 +1,7 @@
 // Copyright © 2017 shoarai
 
-// Package washout provides washout filters.
-// The washout filter processes a vehicle motion to
-// produce a simulator motion to simulate the motion.
+// Package washout provides washout filters
+// to approximately display the sensation of vehicle motions.
 package washout
 
 import (
@@ -25,11 +24,10 @@ type Washout struct {
 	gravityVector                   Vector
 }
 
-// WashoutFilter is a washout filter.
-type WashoutFilter interface {
-	Filter(accelerationX, accelerationY, accelerationZ,
-		angularVelocityX, angularVelocityY, angularVelocityZ float64) Position
-}
+// type WashoutFilter interface {
+// 	Filter(accelerationX, accelerationY, accelerationZ,
+// 		angularVelocityX, angularVelocityY, angularVelocityZ float64) Position
+// }
 
 type Position struct {
 	X, Y, Z, AngleX, AngleY, AngleZ float64
@@ -39,23 +37,23 @@ type Filter interface {
 	Filter(float64) float64
 }
 
-// New creates a new washout
+// New creates a new washout filter.
 func New(
 	translationHPFs *[3]Filter,
 	rotationLPFs *[2]Filter,
 	rotationHPFs *[3]Filter,
-	intervalMs uint) *Washout {
+	interval uint) *Washout {
 
 	var double uint = 2
 	translationDoubleIntegrals := [3]integral.Integral{
-		integral.NewMulti(intervalMs, double),
-		integral.NewMulti(intervalMs, double),
-		integral.NewMulti(intervalMs, double),
+		*integral.NewMulti(interval, double),
+		*integral.NewMulti(interval, double),
+		*integral.NewMulti(interval, double),
 	}
 	rotationIntegrals := [3]integral.Integral{
-		integral.New(intervalMs),
-		integral.New(intervalMs),
-		integral.New(intervalMs),
+		*integral.New(interval),
+		*integral.New(interval),
+		*integral.New(interval),
 	}
 
 	return &Washout{
@@ -71,10 +69,11 @@ func New(
 // gravity_mm is the acceleration of gravity.
 const gravity_mm = 9.80665 * 1000
 
-// Filter processes a vehicle motion to produce a simulator position which simulate the motion
-// Filter receive accelarations in meters per second,
-// and angular velocities in radians per second as arguments.
-// Filter returns X Y Z in meters, and AngleX, AngleY, AngleZ in radians
+// Filter processes vehicle motions to produce simulator positions to simulate the motion.
+// The filter receives vehicle's accelarations in meters per second,
+// and vehicle's angular velocities in radians per second.
+// Then the filter returns simulator's displacements in X, Y, Z-axis in meters
+// and simulator's angles in X, Y, Z-axis in radians.
 func (w *Washout) Filter(
 	accelerationX, accelerationY, accelerationZ,
 	angularVelocityX, angularVelocityY, angularVelocityZ float64) Position {
@@ -105,14 +104,12 @@ func (w *Washout) translationFilter(acceralation Vector) Vector {
 	acce = Vector{
 		w.translationHPFs[0].Filter(acce.X),
 		w.translationHPFs[1].Filter(acce.Y),
-		w.translationHPFs[2].Filter(acce.Z),
-	}
+		w.translationHPFs[2].Filter(acce.Z)}
 
 	return Vector{
 		w.translationDoubleIntegrals[0].Integrate(acce.X),
 		w.translationDoubleIntegrals[1].Integrate(acce.Y),
-		w.translationDoubleIntegrals[2].Integrate(acce.Z),
-	}
+		w.translationDoubleIntegrals[2].Integrate(acce.Z)}
 }
 
 func (w *Washout) tiltFilter(acceralation Vector) Vector {
@@ -124,24 +121,25 @@ func (w *Washout) tiltFilter(acceralation Vector) Vector {
 
 	// Convert low pass filtered accerarations to tilt angles
 	return Vector{
-		-math.Asin(filteredAy / gravity_mm),
-		math.Asin(filteredAx / gravity_mm),
+		math.Asin(filteredAy / gravity_mm),
+		-math.Asin(filteredAx / gravity_mm),
 		0}
 }
 
+// rotationFilter returns the simulator angle to simulate
 func (w *Washout) rotationFilter(scaledAngVel Vector) Vector {
-	filteredAngVelX := w.rotationHPFs[0].Filter(scaledAngVel.X)
-	filteredAngVelY := w.rotationHPFs[1].Filter(scaledAngVel.Y)
-	filteredAngVelZ := w.rotationHPFs[2].Filter(scaledAngVel.Z)
+	filteredAngVel := Vector{
+		w.rotationHPFs[0].Filter(scaledAngVel.X),
+		w.rotationHPFs[1].Filter(scaledAngVel.Y),
+		w.rotationHPFs[2].Filter(scaledAngVel.Z)}
 
 	return Vector{
-		w.rotationIntegrals[0].Integrate(filteredAngVelX),
-		w.rotationIntegrals[1].Integrate(filteredAngVelY),
-		w.rotationIntegrals[2].Integrate(filteredAngVelZ),
-	}
+		w.rotationIntegrals[0].Integrate(filteredAngVel.X),
+		w.rotationIntegrals[1].Integrate(filteredAngVel.Y),
+		w.rotationIntegrals[2].Integrate(filteredAngVel.Z)}
 }
 
-// calculateGravity Calculates gravity vector in vehicle coordinate
+// calculateGravity calculates gravity in the simulator coordinate.
 func (w *Washout) calculateGravity(angle Vector) Vector {
 	sphi := math.Sin(angle.X)
 	cphi := math.Cos(angle.X)

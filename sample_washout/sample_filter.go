@@ -1,3 +1,5 @@
+// Copyright © 2017 shoarai
+
 package sample_washout
 
 func square(x float64) float64 {

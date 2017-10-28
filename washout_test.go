@@ -1,3 +1,5 @@
+// Copyright © 2017 shoarai
+
 package washout_test
 
 import (
@@ -8,7 +10,6 @@ import (
 
 func TestWashoutFilter(t *testing.T) {
 	washout := newTestWashoutFilter()
-	// filter.Filter(1.1, 2.2, 3.3, 4.4, 5.5, 6.6)
 	actual := washout.Filter(0, 0, 0, 0, 0, 0)
 	expected := Position{Z: -0.9806650000000001}
 
