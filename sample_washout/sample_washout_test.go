@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/shoarai/washout"
-
 	"github.com/shoarai/washout/sample_washout"
 )
 
@@ -58,7 +57,7 @@ func TestSampleWashoutFilter_translation(t *testing.T) {
 	}}
 
 	const interval = 10
-	wash := sample_washout.New(interval)
+	wash := sample_washout.NewWashout(interval)
 
 	for _, expected := range expecteds {
 		actual := wash.Filter(1, 1, 0, 0, 0, 0)

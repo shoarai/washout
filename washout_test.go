@@ -44,7 +44,7 @@ func newTestWashoutFilter() *Washout {
 	}
 	interval_ms := uint(10)
 
-	return New(&translationHPFs, &rotationLPFs, &rotationHPFs, interval_ms)
+	return NewWashout(&translationHPFs, &rotationLPFs, &rotationHPFs, interval_ms)
 }
 
 type testFilter struct {

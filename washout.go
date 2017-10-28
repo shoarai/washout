@@ -11,16 +11,6 @@ import (
 	. "github.com/shoarai/washout/internal/vector"
 )
 
-// An Position is a position of simulator.
-type Position struct {
-	X, Y, Z, AngleX, AngleY, AngleZ float64
-}
-
-// A Filter is a filter returns an output from an input.
-type Filter interface {
-	Filter(float64) float64
-}
-
 // An Washout is a washout filter.
 type Washout struct {
 	TranslationScale, RotationScale float64
@@ -34,9 +24,21 @@ type Washout struct {
 	gravityVector              Vector
 }
 
-// New creates a new washout filter.
-func New(
-	translationHPFs *[3]Filter,
+// A Filter is a filter returns an output from an input.
+type Filter interface {
+	Filter(float64) float64
+}
+
+// An Position is a position of simulator.
+type Position struct {
+	X, Y, Z, AngleX, AngleY, AngleZ float64
+}
+
+// gravityMM is the acceleration of gravity.
+const gravityMM = 9.80665 * 1000
+
+// NewWashout creates a new washout filter.
+func NewWashout(translationHPFs *[3]Filter,
 	rotationLPFs *[2]Filter,
 	rotationHPFs *[3]Filter, interval uint) *Washout {
 	const double = 2
@@ -50,17 +52,14 @@ func New(
 		*integral.New(interval)}
 
 	return &Washout{
+		TranslationScale:           1,
+		RotationScale:              1,
 		translationHPFs:            translationHPFs,
 		rotationLPFs:               rotationLPFs,
 		rotationHPFs:               rotationHPFs,
 		translationDoubleIntegrals: &translationDoubleIntegrals,
-		rotationIntegrals:          &rotationIntegrals,
-		TranslationScale:           1,
-		RotationScale:              1}
+		rotationIntegrals:          &rotationIntegrals}
 }
-
-// gravityMM is the acceleration of gravity.
-const gravityMM = 9.80665 * 1000
 
 // Filter processes vehicle motions to produce simulator positions to simulate the motion.
 // The filter receives vehicle's accelarations in meters per second,
