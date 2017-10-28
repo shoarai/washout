@@ -62,7 +62,7 @@ func NewWashout(translationHPFs *[3]Filter,
 }
 
 // Filter processes vehicle motions to produce simulator positions to simulate the motion.
-// The filter receives vehicle's accelarations in meters per second,
+// The filter receives vehicle's accelarations in meters per square second,
 // and vehicle's angular velocities in radians per second.
 // Then the filter returns simulator's displacements in X, Y, Z-axis in meters
 // and simulator's angles in X, Y, Z-axis in radians.

@@ -9,7 +9,7 @@ import (
 	"github.com/shoarai/washout/jaxfilter"
 )
 
-func TestSampleWashoutFilter_inputZero(t *testing.T) {
+func TestFilter_inputZero(t *testing.T) {
 	expecteds := []washout.Position{
 		{Z: -0.95660051821368697},
 		{Z: -1.8659615046637352},
@@ -27,7 +27,7 @@ func TestSampleWashoutFilter_inputZero(t *testing.T) {
 	}
 }
 
-func TestSampleWashoutFilter_translation(t *testing.T) {
+func TestFilter_translation(t *testing.T) {
 	expecteds := []washout.Position{{
 		9.7546105776558483e-05,
 		9.7546105776558483e-05,
@@ -69,7 +69,7 @@ func TestSampleWashoutFilter_translation(t *testing.T) {
 	}
 }
 
-func TestSampleWashoutFilter(t *testing.T) {
+func TestFilter(t *testing.T) {
 	expecteds := []washout.Position{{
 		9.7546105776558483e-05,
 		0.00019509221155311697,
