@@ -21,12 +21,12 @@ type Washout struct {
 
 	translationDoubleIntegrals *[3]integral.Integral
 	rotationIntegrals          *[3]integral.Integral
-	gravityVector              Vector
+	simulatorGravity           Vector
 }
 
 // A Filter is a filter returns an output from an input.
 type Filter interface {
-	Filter(float64) float64
+	Filter(input float64) (output float64)
 }
 
 // An Position is a position of simulator.
@@ -63,14 +63,13 @@ func NewWashout(
 }
 
 // Filter processes vehicle motions to produce simulator positions to simulate the motion.
-// The filter receives vehicle's accelarations in meters per square second,
+// The filter receives vehicle's accelerations in meters per square second,
 // and vehicle's angular velocities in radians per second.
 // Then the filter returns simulator's displacements in X, Y, Z-axis in meters
 // and simulator's angles in X, Y, Z-axis in radians.
 func (w *Washout) Filter(
 	accelerationX, accelerationY, accelerationZ,
 	angularVelocityX, angularVelocityY, angularVelocityZ float64) Position {
-
 	scaledAcceralation := Vector{
 		accelerationX, accelerationY, accelerationZ,
 	}.Multi(w.TranslationScale)
@@ -78,70 +77,70 @@ func (w *Washout) Filter(
 		angularVelocityX, angularVelocityY, angularVelocityZ,
 	}.Multi(w.RotationScale)
 
-	displacement := w.translationFilter(scaledAcceralation)
+	displacement := w.toSimulatorDisplacement(&scaledAcceralation)
 
-	tiltAngle := w.tiltFilter(scaledAcceralation)
-	rotationAngle := w.rotationFilter(scaledAngVel)
+	tiltAngle := w.toSimulatorTilt(&scaledAcceralation)
+	rotationAngle := w.toSimulatorRotation(&scaledAngVel)
 	angle := tiltAngle.Plus(rotationAngle)
 
-	w.gravityVector = w.calculateGravity(angle)
+	w.simulatorGravity = w.calculateGravity(&angle)
 
 	return Position{
 		displacement.X, displacement.Y, displacement.Z,
 		angle.X, angle.Y, angle.Z}
 }
 
-func (w *Washout) translationFilter(acceralation Vector) Vector {
-	acce := acceralation.Plus(w.gravityVector)
+func (w *Washout) toSimulatorDisplacement(acceralation *Vector) Vector {
+	acce := acceralation.Plus(w.simulatorGravity)
 	acce.Z -= gravityMM
-	acce = Vector{
-		w.translationHighPassFilters[0].Filter(acce.X),
-		w.translationHighPassFilters[1].Filter(acce.Y),
-		w.translationHighPassFilters[2].Filter(acce.Z)}
-
-	return Vector{
-		w.translationDoubleIntegrals[0].Integrate(acce.X),
-		w.translationDoubleIntegrals[1].Integrate(acce.Y),
-		w.translationDoubleIntegrals[2].Integrate(acce.Z)}
+	acce = w.filterVector(w.translationHighPassFilters, &acce)
+	return w.integrateVector(w.translationDoubleIntegrals, &acce)
 }
 
-func (w *Washout) tiltFilter(acceralation Vector) Vector {
+func (w *Washout) toSimulatorTilt(acceralation *Vector) Vector {
 	filteredAx := w.translationLowPassFilters[0].Filter(acceralation.X)
 	filteredAy := w.translationLowPassFilters[1].Filter(acceralation.Y)
 
-	// TODO: Check if asin returns NaN
+	// TODO: Check if asin returns NaN.
 	// math.IsNaN(math.Asin(x)
 
-	// Convert low pass filtered accerarations to tilt angles
+	// Convert low pass filtered accelerations to tilt angles.
 	return Vector{
 		math.Asin(filteredAy / gravityMM),
 		-math.Asin(filteredAx / gravityMM),
 		0}
 }
 
-// rotationFilter returns the simulator angle to simulate
-func (w *Washout) rotationFilter(scaledAngVel Vector) Vector {
-	filteredAngVel := Vector{
-		w.rotationHighPassFilters[0].Filter(scaledAngVel.X),
-		w.rotationHighPassFilters[1].Filter(scaledAngVel.Y),
-		w.rotationHighPassFilters[2].Filter(scaledAngVel.Z)}
-
-	return Vector{
-		w.rotationIntegrals[0].Integrate(filteredAngVel.X),
-		w.rotationIntegrals[1].Integrate(filteredAngVel.Y),
-		w.rotationIntegrals[2].Integrate(filteredAngVel.Z)}
+// toSimulatorRotation returns the simulator angle to simulate.
+func (w *Washout) toSimulatorRotation(scaledAngVel *Vector) Vector {
+	angVel := w.filterVector(w.rotationHighPassFilters, scaledAngVel)
+	return w.integrateVector(w.rotationIntegrals, &angVel)
 }
 
 // calculateGravity calculates gravity in the simulator coordinate.
-func (w *Washout) calculateGravity(angle Vector) Vector {
-	sphi := math.Sin(angle.X)
-	cphi := math.Cos(angle.X)
-	ssit := math.Sin(angle.Y)
-	csit := math.Cos(angle.Y)
+func (w *Washout) calculateGravity(angle *Vector) Vector {
+	sinAngleX := math.Sin(angle.X)
+	cosAngleX := math.Cos(angle.X)
+	sinAngleY := math.Sin(angle.Y)
+	cosAngleY := math.Cos(angle.Y)
 
 	return Vector{
-		-ssit,
-		sphi * csit,
-		cphi * csit,
+		-sinAngleY,
+		sinAngleX * cosAngleY,
+		cosAngleX * cosAngleY,
 	}.Multi(gravityMM)
+}
+
+func (w *Washout) filterVector(filter *[3]Filter, vector *Vector) Vector {
+	return Vector{
+		filter[0].Filter(vector.X),
+		filter[1].Filter(vector.Y),
+		filter[2].Filter(vector.Z)}
+}
+
+func (w *Washout) integrateVector(integ *[3]integral.Integral, vector *Vector) Vector {
+	return Vector{
+		integ[0].Integrate(vector.X),
+		integ[1].Integrate(vector.Y),
+		integ[2].Integrate(vector.Z)}
 }
