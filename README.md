@@ -1,6 +1,8 @@
 # Washout
 Washout filter generates simulator's motions to simulate vehicle's motions.
 
+![](https://travis-ci.org/shoarai/washout.svg?branch=master)
+
 ## Structure
 ![washoutstructure](https://cloud.githubusercontent.com/assets/5831786/26201462/0d654434-3c0e-11e7-8a44-e633e5290151.png)
 
