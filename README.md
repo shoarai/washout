@@ -21,7 +21,7 @@ func main() {
     const interval = 10
     wash := jaxfilter.NewWashout(interval)
 
-    // Pass vehicle's accelarations in meters per square second
+    // Pass vehicle's accelerations in meters per square second
     // and angular velocities in radians per second.
     position := wash.Filter(1, 1, 1, 3.14, 3.14, 3.14)
 
