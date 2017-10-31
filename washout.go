@@ -34,19 +34,23 @@ type Position struct {
 	X, Y, Z, AngleX, AngleY, AngleZ float64
 }
 
-// gravityMM is the acceleration of gravity.
-const gravityMM = 9.80665 * 1000
+// gravity is the acceleration of gravity.
+const gravity = 9.80665 * 1000
 
 // NewWashout creates a new washout filter.
+// interval is the interval of proccessing in milliseconds.
 func NewWashout(
 	translationHighPassFilters *[3]Filter,
 	translationLowPassFilters *[2]Filter,
 	rotationHighPassFilters *[3]Filter, interval uint) *Washout {
-	const double = 2
+	// For accelerations to velocities to displacements
+	const integralNumber = 2
 	translationDoubleIntegrals := [3]integral.Integral{
-		*integral.NewMulti(interval, double),
-		*integral.NewMulti(interval, double),
-		*integral.NewMulti(interval, double)}
+		*integral.NewMulti(interval, integralNumber),
+		*integral.NewMulti(interval, integralNumber),
+		*integral.NewMulti(interval, integralNumber)}
+
+	// For angular velocities to angles
 	rotationIntegrals := [3]integral.Integral{
 		*integral.New(interval),
 		*integral.New(interval),
@@ -92,7 +96,7 @@ func (w *Washout) Filter(
 
 func (w *Washout) toSimulatorDisplacement(acceleration *Vector) Vector {
 	acce := acceleration.Plus(w.simulatorGravity)
-	acce.Z -= gravityMM
+	acce.Z -= gravity
 	acce = w.filterVector(w.translationHighPassFilters, &acce)
 	return w.integrateVector(w.translationDoubleIntegrals, &acce)
 }
@@ -106,8 +110,8 @@ func (w *Washout) toSimulatorTilt(acceleration *Vector) Vector {
 
 	// Convert low pass filtered accelerations to tilt angles.
 	return Vector{
-		math.Asin(filteredAy / gravityMM),
-		-math.Asin(filteredAx / gravityMM),
+		math.Asin(filteredAy / gravity),
+		-math.Asin(filteredAx / gravity),
 		0}
 }
 
@@ -128,7 +132,7 @@ func (w *Washout) calculateGravity(angle *Vector) Vector {
 		-sinAngleY,
 		sinAngleX * cosAngleY,
 		cosAngleX * cosAngleY,
-	}.Multi(gravityMM)
+	}.Multi(gravity)
 }
 
 func (w *Washout) filterVector(filter *[3]Filter, vector *Vector) Vector {

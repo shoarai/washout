@@ -17,7 +17,7 @@ package main
 import	"github.com/shoarai/washout/jaxfilter"
 
 func main() {
-    // Set the interval of processing.
+    // Set the interval of processing in milliseconds.
     const interval = 10
     wash := jaxfilter.NewWashout(interval)
 
