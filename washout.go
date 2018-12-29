@@ -29,7 +29,7 @@ type Filter interface {
 	Filter(input float64) (output float64)
 }
 
-// An Position is a position of simulator.
+// A Position is a position of simulator.
 type Position struct {
 	X, Y, Z, AngleX, AngleY, AngleZ float64
 }
@@ -43,18 +43,9 @@ func NewWashout(
 	translationHighPassFilters *[3]Filter,
 	translationLowPassFilters *[2]Filter,
 	rotationHighPassFilters *[3]Filter, interval uint) *Washout {
-	// For accelerations to velocities to displacements
-	const integralNumber = 2
-	translationDoubleIntegrals := [3]integral.Integral{
-		*integral.NewMulti(interval, integralNumber),
-		*integral.NewMulti(interval, integralNumber),
-		*integral.NewMulti(interval, integralNumber)}
 
-	// For angular velocities to angles
-	rotationIntegrals := [3]integral.Integral{
-		*integral.New(interval),
-		*integral.New(interval),
-		*integral.New(interval)}
+	translationDoubleIntegrals := newThreeDoubleIntegrals(interval)
+	rotationIntegrals := newThreeIntegrals(interval)
 
 	return &Washout{
 		TranslationScale:           1,
@@ -66,6 +57,21 @@ func NewWashout(
 		rotationIntegrals:          &rotationIntegrals}
 }
 
+func newThreeDoubleIntegrals(interval uint) [3]integral.Integral {
+	const integralNumber = 2
+	return [3]integral.Integral{
+		*integral.NewMulti(interval, integralNumber),
+		*integral.NewMulti(interval, integralNumber),
+		*integral.NewMulti(interval, integralNumber)}
+}
+
+func newThreeIntegrals(interval uint) [3]integral.Integral {
+	return [3]integral.Integral{
+		*integral.New(interval),
+		*integral.New(interval),
+		*integral.New(interval)}
+}
+
 // Filter processes vehicle motions to produce simulator positions to simulate the motion.
 // The filter receives vehicle's accelerations in meters per square second,
 // and vehicle's angular velocities in radians per second.
@@ -75,10 +81,15 @@ func (w *Washout) Filter(
 	accelerationX, accelerationY, accelerationZ,
 	angularVelocityX, angularVelocityY, angularVelocityZ float64) Position {
 	scaledAcceleration := Vector{
-		accelerationX, accelerationY, accelerationZ,
+		X: accelerationX,
+		Y: accelerationY,
+		Z: accelerationZ,
 	}.Multi(w.TranslationScale)
+
 	scaledAngVel := Vector{
-		angularVelocityX, angularVelocityY, angularVelocityZ,
+		X: angularVelocityX,
+		Y: angularVelocityY,
+		Z: angularVelocityZ,
 	}.Multi(w.RotationScale)
 
 	displacement := w.toSimulatorDisplacement(&scaledAcceleration)
@@ -110,9 +121,9 @@ func (w *Washout) toSimulatorTilt(acceleration *Vector) Vector {
 
 	// Convert low pass filtered accelerations to tilt angles.
 	return Vector{
-		math.Asin(filteredAy / gravity),
-		-math.Asin(filteredAx / gravity),
-		0}
+		X: math.Asin(filteredAy / gravity),
+		Y: -math.Asin(filteredAx / gravity),
+		Z: 0}
 }
 
 // toSimulatorRotation returns the simulator angle to simulate.
@@ -129,22 +140,22 @@ func (w *Washout) calculateGravity(angle *Vector) Vector {
 	cosAngleY := math.Cos(angle.Y)
 
 	return Vector{
-		-sinAngleY,
-		sinAngleX * cosAngleY,
-		cosAngleX * cosAngleY,
+		X: -sinAngleY,
+		Y: sinAngleX * cosAngleY,
+		Z: cosAngleX * cosAngleY,
 	}.Multi(gravity)
 }
 
 func (w *Washout) filterVector(filter *[3]Filter, vector *Vector) Vector {
 	return Vector{
-		filter[0].Filter(vector.X),
-		filter[1].Filter(vector.Y),
-		filter[2].Filter(vector.Z)}
+		X: filter[0].Filter(vector.X),
+		Y: filter[1].Filter(vector.Y),
+		Z: filter[2].Filter(vector.Z)}
 }
 
 func (w *Washout) integrateVector(integ *[3]integral.Integral, vector *Vector) Vector {
 	return Vector{
-		integ[0].Integrate(vector.X),
-		integ[1].Integrate(vector.Y),
-		integ[2].Integrate(vector.Z)}
+		X: integ[0].Integrate(vector.X),
+		Y: integ[1].Integrate(vector.Y),
+		Z: integ[2].Integrate(vector.Z)}
 }
