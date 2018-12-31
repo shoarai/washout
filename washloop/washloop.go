@@ -9,19 +9,29 @@ import (
 	"github.com/shoarai/washout"
 )
 
+// A Vector is a vector in 3D axis.
 type Vector struct {
 	X, Y, Z float64
 }
 
+// A Motion is accelerations and angular velocities in 3D axis.
 type Motion struct {
 	Acceleration    Vector
 	AngularVelocity Vector
 }
 
+// A WashoutInterface is a interface of washout.
+type WashoutInterface interface {
+	Filter(
+		accelerationX, accelerationY, accelerationZ,
+		angularVelocityX, angularVelocityY, angularVelocityZ float64) washout.Position
+}
+
+// A WashoutLoop is a loop for process of washout.
 type WashoutLoop struct {
 	interval uint
 
-	washout  washout.WashoutInterface
+	washout  WashoutInterface
 	motion   Motion
 	position washout.Position
 
@@ -31,7 +41,8 @@ type WashoutLoop struct {
 	positionMutex *sync.Mutex
 }
 
-func NewWashoutLoop(washout washout.WashoutInterface, interval uint) *WashoutLoop {
+// NewWashLoop creates new washout loop.
+func NewWashLoop(washout WashoutInterface, interval uint) *WashoutLoop {
 	w := WashoutLoop{}
 	w.stopCh = make(chan struct{})
 	w.interval = interval
@@ -39,6 +50,7 @@ func NewWashoutLoop(washout washout.WashoutInterface, interval uint) *WashoutLoo
 	return &w
 }
 
+// Start starts a loop of process.
 func (w *WashoutLoop) Start() {
 	interval := time.Duration(w.interval) * time.Millisecond
 	ticker := time.NewTicker(interval)
@@ -54,6 +66,7 @@ func (w *WashoutLoop) Start() {
 	}
 }
 
+// Stop stops a loop of process.
 func (w *WashoutLoop) Stop() {
 	close(w.stopCh)
 }
@@ -71,12 +84,13 @@ func (w *WashoutLoop) filter() {
 	w.setPosition(position)
 }
 
-func (w *WashoutLoop) init(washout washout.WashoutInterface) {
+func (w *WashoutLoop) init(washout WashoutInterface) {
 	w.washout = washout
 	w.motionMutex = new(sync.Mutex)
 	w.positionMutex = new(sync.Mutex)
 }
 
+// SetMotion sets a motion used as input of washout.
 func (w *WashoutLoop) SetMotion(motion Motion) {
 	w.motionMutex.Lock()
 	defer w.motionMutex.Unlock()
@@ -98,6 +112,7 @@ func (w *WashoutLoop) setPosition(position washout.Position) {
 	w.position = position
 }
 
+// GetPosition gets a position as output of washout.
 func (w *WashoutLoop) GetPosition() washout.Position {
 	w.positionMutex.Lock()
 	defer w.positionMutex.Unlock()

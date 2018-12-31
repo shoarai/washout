@@ -11,7 +11,7 @@ import (
 	. "github.com/shoarai/washout/internal/vector"
 )
 
-// An Washout is a washout filter.
+// A Washout is a washout filter.
 type Washout struct {
 	TranslationScale, RotationScale float64
 
