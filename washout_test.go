@@ -1,4 +1,4 @@
-// Copyright © 2017 shoarai
+// Copyright © 2018 shoarai
 
 package washout_test
 

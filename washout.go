@@ -1,4 +1,4 @@
-// Copyright © 2017 shoarai
+// Copyright © 2018 shoarai
 
 // Package washout provides washout filters
 // to approximately display the sensation of vehicle motions.
@@ -8,7 +8,6 @@ import (
 	"math"
 
 	"github.com/shoarai/washout/internal/integral"
-	. "github.com/shoarai/washout/internal/vector"
 )
 
 // A Washout is a washout filter.
@@ -80,22 +79,42 @@ func newThreeIntegrals(interval uint) [3]integral.Integral {
 func (w *Washout) Filter(
 	accelerationX, accelerationY, accelerationZ,
 	angularVelocityX, angularVelocityY, angularVelocityZ float64) Position {
-	scaledAcceleration := Vector{
+	acceleration := Vector{
 		X: accelerationX,
 		Y: accelerationY,
 		Z: accelerationZ,
-	}.Multi(w.TranslationScale)
-
-	scaledAngVel := Vector{
+	}
+	angularVelocity := Vector{
 		X: angularVelocityX,
 		Y: angularVelocityY,
 		Z: angularVelocityZ,
+	}
+
+	scaledAcceleration, scaledAngVel := w.scaleMotion(&acceleration, &angularVelocity)
+	return w.filter(&scaledAcceleration, &scaledAngVel)
+}
+
+func (w *Washout) scaleMotion(acceleration *Vector, angularVelocity *Vector) (Vector, Vector) {
+	scaledAcceleration := Vector{
+		X: acceleration.X,
+		Y: acceleration.Y,
+		Z: acceleration.Z,
+	}.Multi(w.TranslationScale)
+
+	scaledAngVel := Vector{
+		X: angularVelocity.X,
+		Y: angularVelocity.Y,
+		Z: angularVelocity.Z,
 	}.Multi(w.RotationScale)
 
-	displacement := w.toSimulatorDisplacement(&scaledAcceleration)
+	return scaledAcceleration, scaledAngVel
+}
 
-	tiltAngle := w.toSimulatorTilt(&scaledAcceleration)
-	rotationAngle := w.toSimulatorRotation(&scaledAngVel)
+func (w *Washout) filter(scaledAcceleration *Vector, scaledAngularVelocity *Vector) Position {
+	displacement := w.toSimulatorDisplacement(scaledAcceleration)
+
+	tiltAngle := w.toSimulatorTilt(scaledAcceleration)
+	rotationAngle := w.toSimulatorRotation(scaledAngularVelocity)
 	angle := tiltAngle.Plus(rotationAngle)
 
 	w.simulatorGravity = w.calculateGravity(&angle)

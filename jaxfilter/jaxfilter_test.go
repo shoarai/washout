@@ -1,4 +1,4 @@
-// Copyright © 2017 shoarai
+// Copyright © 2018 shoarai
 
 package jaxfilter_test
 
@@ -8,6 +8,26 @@ import (
 	"github.com/shoarai/washout"
 	"github.com/shoarai/washout/jaxfilter"
 )
+
+// func TestFilter_Zero(t *testing.T) {
+// 	const interval = 10
+// 	wash := jaxfilter.NewWashout(interval)
+
+// 	defer func() {
+// 		fmt.Println("End")
+// 		err := recover()
+// 		if err != nil {
+// 			fmt.Println("Recover!:", err)
+// 		}
+// 	}()
+
+// 	for i := 0; i < 15; i++ {
+// 		actual := wash.Filter(9.80665*1000, 1000000, 0, 0, 0, 0)
+// 		t.Errorf("%v", actual)
+// 		actual.Z++
+// 		actual.Z += actual.Y
+// 	}
+// }
 
 func TestFilter_inputZero(t *testing.T) {
 	expecteds := []washout.Position{

@@ -1,11 +1,13 @@
-// Copyright © 2017 shoarai
+// Copyright © 2018 shoarai
 
-package vector
+package washout
 
+// A Vector is a vector in 3D axis.
 type Vector struct {
 	X, Y, Z float64
 }
 
+// Plus adds a vector.
 func (vec Vector) Plus(vector Vector) Vector {
 	return Vector{
 		vec.X + vector.X,
@@ -13,6 +15,7 @@ func (vec Vector) Plus(vector Vector) Vector {
 		vec.Z + vector.Z}
 }
 
+// Multi multiples a value.
 func (vec Vector) Multi(val float64) Vector {
 	return Vector{
 		vec.X * val,

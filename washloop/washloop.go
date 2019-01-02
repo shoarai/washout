@@ -9,15 +9,10 @@ import (
 	"github.com/shoarai/washout"
 )
 
-// A Vector is a vector in 3D axis.
-type Vector struct {
-	X, Y, Z float64
-}
-
 // A Motion is accelerations and angular velocities in 3D axis.
 type Motion struct {
-	Acceleration    Vector
-	AngularVelocity Vector
+	Acceleration    washout.Vector
+	AngularVelocity washout.Vector
 }
 
 // A WashoutInterface is a interface of washout.
